@@ -1,6 +1,8 @@
-import { articles } from '../data/mockData';
+import { useArticlesByCategory } from '../hooks/useArticles';
 import ArticleCard from '../components/articles/ArticleCard';
 import Newsletter from '../components/Newsletter';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorMessage from '../components/ui/ErrorMessage';
 
 interface CategoryPageProps {
   category: string;
@@ -8,8 +10,8 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ category, onArticleClick }: CategoryPageProps) {
-  const categoryArticles = articles.filter(
-    (article) => article.category.toLowerCase() === category.toLowerCase()
+  const { articles: categoryArticles, loading, error, refetch } = useArticlesByCategory(
+    category.charAt(0).toUpperCase() + category.slice(1)
   );
 
   const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
@@ -26,7 +28,11 @@ export default function CategoryPage({ category, onArticleClick }: CategoryPageP
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {categoryArticles.length > 0 ? (
+        {loading ? (
+          <LoadingSpinner className="py-12" />
+        ) : error ? (
+          <ErrorMessage message={error.message} onRetry={refetch} />
+        ) : categoryArticles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {categoryArticles.map((article) => (
               <ArticleCard

@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { articles } from '../data/mockData';
+import { useArticles } from '../hooks/useArticles';
 import Hero from '../components/Hero';
 import FeaturedArticleCard from '../components/articles/FeaturedArticleCard';
 import ArticleCard from '../components/articles/ArticleCard';
 import SmallArticleCard from '../components/articles/SmallArticleCard';
 import Newsletter from '../components/Newsletter';
 import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorMessage from '../components/ui/ErrorMessage';
 
 interface HomePageProps {
   onArticleClick: (id: string) => void;
@@ -13,10 +15,21 @@ interface HomePageProps {
 
 export default function HomePage({ onArticleClick }: HomePageProps) {
   const [visibleArticles, setVisibleArticles] = useState(6);
+  const { articles, loading, error, refetch } = useArticles();
 
-  const heroArticle = articles.find((a) => a.featured && a.id === '1');
-  const featuredArticle = articles.find((a) => a.featured && a.id === '2');
-  const recentArticles = articles.slice(2, visibleArticles + 2);
+  if (loading) {
+    return <LoadingSpinner className="py-24" />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error.message} onRetry={refetch} />;
+  }
+
+  const featuredArticles = articles.filter((a) => a.featured);
+  const heroArticle = featuredArticles[0];
+  const featuredArticle = featuredArticles[1];
+  const nonFeaturedArticles = articles.filter((a) => !a.featured);
+  const recentArticles = nonFeaturedArticles.slice(0, visibleArticles);
   const popularArticles = articles.slice(0, 4);
 
   const loadMore = () => {
@@ -56,7 +69,7 @@ export default function HomePage({ onArticleClick }: HomePageProps) {
                 ))}
               </div>
 
-              {visibleArticles + 2 < articles.length && (
+              {visibleArticles < nonFeaturedArticles.length && (
                 <div className="text-center mt-12">
                   <Button onClick={loadMore} variant="outline" size="lg">
                     Load More Articles

@@ -2,7 +2,7 @@ import { Clock, Calendar, User, Share2, ArrowLeft } from 'lucide-react';
 import { Article } from '../types';
 import Badge from '../components/ui/Badge';
 import ArticleCard from '../components/articles/ArticleCard';
-import { articles } from '../data/mockData';
+import { useArticlesByCategory } from '../hooks/useArticles';
 
 interface ArticlePageProps {
   article: Article;
@@ -11,8 +11,9 @@ interface ArticlePageProps {
 }
 
 export default function ArticlePage({ article, onBack, onArticleClick }: ArticlePageProps) {
-  const relatedArticles = articles
-    .filter((a) => a.category === article.category && a.id !== article.id)
+  const { articles: categoryArticles } = useArticlesByCategory(article.category);
+  const relatedArticles = categoryArticles
+    .filter((a) => a.id !== article.id)
     .slice(0, 3);
 
   return (
@@ -88,66 +89,14 @@ export default function ArticlePage({ article, onBack, onArticleClick }: Article
               {article.excerpt}
             </p>
 
-            <div className="space-y-6 text-gray-700 leading-relaxed">
-              <p>
-                In an era defined by rapid technological advancement and evolving social
-                dynamics, understanding the forces that shape our world has never been more
-                critical. This exploration delves into the intricate relationships between
-                innovation, culture, and human experience.
-              </p>
-
-              <p>
-                The landscape we navigate today is fundamentally different from that of
-                previous generations. Digital transformation has revolutionized how we
-                communicate, work, and engage with information. Yet, beneath these surface
-                changes lie deeper questions about identity, purpose, and connection.
-              </p>
-
-              <h2 className="text-3xl font-serif font-bold text-gray-900 mt-12 mb-6">
-                The Evolution of Modern Thinking
-              </h2>
-
-              <p>
-                Contemporary thought leaders are challenging traditional frameworks and
-                proposing new paradigms that better reflect our interconnected reality.
-                These perspectives offer fresh insights into age-old questions while
-                addressing uniquely modern challenges.
-              </p>
-
-              <blockquote className="border-l-4 border-gray-900 pl-6 my-8 italic text-xl text-gray-800">
-                "The future belongs to those who understand that doing more with less is
-                compassionate, prosperous, and enduring, and thus more intelligent."
-              </blockquote>
-
-              <p>
-                As we move forward, the integration of diverse viewpoints becomes essential.
-                Cross-disciplinary collaboration and inclusive dialogue create the foundation
-                for innovative solutions to complex problems.
-              </p>
-
-              <h2 className="text-3xl font-serif font-bold text-gray-900 mt-12 mb-6">
-                Practical Applications and Real-World Impact
-              </h2>
-
-              <p>
-                Theory transforms into practice through deliberate action and sustained
-                commitment. Leading organizations demonstrate how thoughtful implementation
-                of new ideas can create measurable positive outcomes.
-              </p>
-
-              <p>
-                From sustainable business practices to inclusive design principles, we're
-                witnessing a shift toward more conscious and considered approaches across
-                industries. These changes reflect growing awareness of our collective
-                responsibility.
-              </p>
-
-              <p>
-                The path forward requires both courage and humility—courage to challenge
-                established norms and humility to learn from diverse perspectives. By
-                embracing this balance, we create space for meaningful progress.
-              </p>
-            </div>
+            {article.content ? (
+              <div
+                className="space-y-6 text-gray-700 leading-relaxed prose-headings:font-serif prose-headings:font-bold prose-headings:text-gray-900 prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-6 prose-blockquote:my-8 prose-blockquote:italic prose-blockquote:text-xl prose-blockquote:text-gray-800"
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
+            ) : (
+              <p className="text-gray-600 italic">No content available.</p>
+            )}
           </div>
 
           <div className="mt-16 pt-8 border-t border-gray-200">

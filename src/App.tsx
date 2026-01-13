@@ -5,7 +5,8 @@ import HomePage from './pages/HomePage';
 import ArticlePage from './pages/ArticlePage';
 import AboutPage from './pages/AboutPage';
 import CategoryPage from './pages/CategoryPage';
-import { articles } from './data/mockData';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import { useArticle } from './hooks/useArticles';
 
 type PageType = 'home' | 'article' | 'about' | 'category';
 
@@ -17,6 +18,9 @@ interface PageState {
 
 function App() {
   const [page, setPage] = useState<PageState>({ type: 'home' });
+  const { article, loading: articleLoading } = useArticle(
+    page.type === 'article' ? page.articleId : undefined
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -45,7 +49,9 @@ function App() {
       case 'home':
         return <HomePage onArticleClick={handleArticleClick} />;
       case 'article': {
-        const article = articles.find((a) => a.id === page.articleId);
+        if (articleLoading) {
+          return <LoadingSpinner className="py-24" />;
+        }
         return article ? (
           <ArticlePage
             article={article}
