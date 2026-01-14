@@ -18,7 +18,7 @@ export async function fetchFeaturedArticles(): Promise<Article[]> {
 export async function fetchArticlesByCategory(category: string): Promise<Article[]> {
   const response = await queryDatabase({
     property: 'Category',
-    select: { equals: category },
+    rich_text: { equals: category },
   });
   return transformNotionPagesToArticles(response.results);
 }

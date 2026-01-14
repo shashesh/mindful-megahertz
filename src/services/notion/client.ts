@@ -29,18 +29,10 @@ export async function queryDatabase(
   filter?: object,
   sorts?: object[]
 ): Promise<NotionDatabaseQueryResponse> {
-  const filterConditions = [
-    { property: 'Status', select: { equals: 'Published' } },
-  ];
-
-  if (filter) {
-    filterConditions.push(filter as { property: string; select: { equals: string } });
-  }
-
   return notionFetch(`/v1/databases/${DATABASE_ID}/query`, {
     method: 'POST',
     body: JSON.stringify({
-      filter: filterConditions.length > 1 ? { and: filterConditions } : filterConditions[0],
+      filter: filter || undefined,
       sorts: sorts || [{ property: 'Published', direction: 'descending' }],
     }),
   });
