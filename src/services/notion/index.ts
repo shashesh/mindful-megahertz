@@ -1,5 +1,5 @@
 import { Article } from '../../types';
-import { queryDatabase, getPage, getPageBlocks } from './client';
+import { queryDatabase, getPageWithBlocks } from './client';
 import { transformNotionPageToArticle, transformNotionPagesToArticles } from './transformers';
 
 export async function fetchArticles(): Promise<Article[]> {
@@ -25,11 +25,8 @@ export async function fetchArticlesByCategory(category: string): Promise<Article
 
 export async function fetchArticleById(id: string): Promise<Article | null> {
   try {
-    const [page, blocksResponse] = await Promise.all([
-      getPage(id),
-      getPageBlocks(id),
-    ]);
-    return transformNotionPageToArticle(page, blocksResponse.results);
+    const { page, blocks } = await getPageWithBlocks(id);
+    return transformNotionPageToArticle(page, blocks);
   } catch (error) {
     console.error('Failed to fetch article:', error);
     return null;

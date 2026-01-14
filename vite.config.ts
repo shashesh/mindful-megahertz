@@ -7,16 +7,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  server: {
-    proxy: {
-      '/api/notion': {
-        target: 'https://api.notion.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/notion/, ''),
-        headers: {
-          'Notion-Version': '2022-06-28',
-        },
-      },
-    },
-  },
 });
