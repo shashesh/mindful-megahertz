@@ -9,13 +9,16 @@ A modern Mindful Megahertz magazine website built with React, TypeScript, and Ta
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 3
 - **Icons**: Lucide React
-- **Backend**: Supabase (configured, using mock data)
+- **Backend**: Notion API (via Netlify Functions)
+- **Hosting**: Netlify
 - **Linting**: ESLint 9 with React hooks and React Refresh plugins
 
 ## Prerequisites
 
 - Node.js (v18 or higher recommended)
 - npm
+- Netlify CLI (`npm install -g netlify-cli`)
+- Notion account with an integration
 
 ## Getting Started
 
@@ -23,17 +26,33 @@ A modern Mindful Megahertz magazine website built with React, TypeScript, and Ta
 
 ```bash
 npm install
+npm install -g netlify-cli
 ```
 
-### Development
+### Environment Variables
 
-Start the development server with hot module replacement:
+Create a `.env` file in the root directory:
+
+```env
+NOTION_API_KEY=secret_xxx
+NOTION_DATABASE_ID=xxx
+```
+
+To get these values:
+1. Create a Notion integration at https://www.notion.so/my-integrations
+2. Create a database with the required properties (see Data Layer section)
+3. Share the database with your integration
+4. Copy the database ID from the URL
+
+### Local Development
+
+Run with Netlify CLI to enable serverless functions:
 
 ```bash
-npm run dev
+netlify dev
 ```
 
-The app will be available at `http://localhost:5173`
+This starts both the Vite dev server and Netlify Functions locally. The app will be available at `http://localhost:8888`
 
 ### Production Build
 
@@ -45,19 +64,20 @@ npm run build
 
 This creates an optimized build in the `dist/` directory.
 
-### Preview Production Build
-
-Preview the production build locally:
+### Deploy to Netlify
 
 ```bash
-npm run preview
+netlify deploy --prod
 ```
+
+Or connect your GitHub repo to Netlify for automatic deployments.
 
 ## Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Vite dev server with HMR |
+| `netlify dev` | Start local dev server with functions |
+| `npm run dev` | Start Vite only (no API functions) |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint |
@@ -67,11 +87,11 @@ npm run preview
 
 | Aspect | Development | Production |
 |--------|-------------|------------|
-| Server | Vite dev server with HMR | Static files served from `dist/` |
+| Command | `netlify dev` | Netlify hosting |
+| Server | Vite + Netlify Dev | Netlify CDN + Functions |
+| API Calls | Local serverless functions | Netlify Functions |
 | Source Maps | Enabled | Disabled |
-| Minification | No | Yes |
-| Bundle | Unbundled ES modules | Optimized chunks |
-| Build Output | N/A | `dist/index.html`, `dist/assets/` |
+| Build Output | N/A | `dist/` + `netlify/functions/` |
 
 ## Project Architecture
 
@@ -97,32 +117,46 @@ Navigation functions:
 ### Directory Structure
 
 ```
-src/
-├── components/
-│   ├── articles/           # Article display components
-│   │   ├── ArticleCard.tsx
-│   │   ├── FeaturedArticleCard.tsx
-│   │   └── SmallArticleCard.tsx
-│   ├── ui/                 # Reusable UI primitives
-│   │   ├── Badge.tsx
-│   │   ├── Button.tsx
-│   │   └── Input.tsx
-│   ├── Footer.tsx
-│   ├── Header.tsx
-│   ├── Hero.tsx
-│   └── Newsletter.tsx
-├── data/
-│   └── mockData.ts         # Mock articles, categories, site config
-├── pages/
-│   ├── AboutPage.tsx
-│   ├── ArticlePage.tsx
-│   ├── CategoryPage.tsx
-│   └── HomePage.tsx
-├── App.tsx                 # Main app with routing logic
-├── main.tsx                # React entry point
-├── index.css               # Global styles and Tailwind imports
-├── types.ts                # TypeScript type definitions
-└── vite-env.d.ts           # Vite type declarations
+├── netlify/
+│   └── functions/          # Serverless API functions
+│       ├── notion-query.js # Query Notion database
+│       └── notion-page.js  # Fetch page with content blocks
+├── src/
+│   ├── components/
+│   │   ├── articles/       # Article display components
+│   │   │   ├── ArticleCard.tsx
+│   │   │   ├── FeaturedArticleCard.tsx
+│   │   │   └── SmallArticleCard.tsx
+│   │   ├── ui/             # Reusable UI primitives
+│   │   │   ├── Badge.tsx
+│   │   │   ├── Button.tsx
+│   │   │   ├── ErrorMessage.tsx
+│   │   │   ├── Input.tsx
+│   │   │   └── LoadingSpinner.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Header.tsx
+│   │   ├── Hero.tsx
+│   │   └── Newsletter.tsx
+│   ├── hooks/
+│   │   └── useArticles.ts  # React hooks for data fetching
+│   ├── services/
+│   │   └── notion/         # Notion API integration
+│   │       ├── blocks.ts   # Block-to-HTML converter
+│   │       ├── client.ts   # API client
+│   │       ├── index.ts    # Service exports
+│   │       ├── transformers.ts
+│   │       └── types.ts
+│   ├── pages/
+│   │   ├── AboutPage.tsx
+│   │   ├── ArticlePage.tsx
+│   │   ├── CategoryPage.tsx
+│   │   └── HomePage.tsx
+│   ├── App.tsx             # Main app with routing logic
+│   ├── main.tsx            # React entry point
+│   ├── index.css           # Global styles and Tailwind imports
+│   ├── types.ts            # TypeScript type definitions
+│   └── vite-env.d.ts       # Vite type declarations
+└── netlify.toml            # Netlify configuration
 ```
 
 ### Core Types
@@ -191,6 +225,7 @@ interface SiteConfig {
 
 | File | Purpose |
 |------|---------|
+| `netlify.toml` | Netlify build and functions configuration |
 | `vite.config.ts` | Vite build configuration |
 | `tailwind.config.js` | Tailwind CSS customization |
 | `postcss.config.js` | PostCSS plugins (Tailwind, Autoprefixer) |
@@ -201,13 +236,32 @@ interface SiteConfig {
 
 ## Data Layer
 
-Currently using mock data in `src/data/mockData.ts`. The app is configured for Supabase integration:
+Articles are fetched from a Notion database via Netlify Functions.
 
-- **Articles**: 9 sample articles across 5 categories
-- **Categories**: Culture, Technology, Design, Business, Lifestyle
-- **Site Config**: Title, description, social links
+### Notion Database Properties
 
-To connect to Supabase, configure the client in your environment and replace mock data imports with Supabase queries.
+| Property | Type | Description |
+|----------|------|-------------|
+| Title | Title | Article title |
+| Excerpt | Text | Short description |
+| Category | Text | Article category |
+| Author Name | Text | Author's name |
+| Author Bio | Text | Author biography (optional) |
+| Cover Image | URL | Cover image URL |
+| Published | Date | Publication date |
+| Read Time | Number | Minutes to read |
+| Featured | Checkbox | Show in featured section |
+| Editors Pick | Checkbox | Editor's pick badge |
+
+### Article Content
+
+The main article content is written in the **page body** (not a property). Supported blocks:
+- Paragraphs, headings (H1, H2, H3)
+- Bulleted and numbered lists
+- Quotes and callouts
+- Code blocks
+- Images with captions
+- Dividers
 
 ## Browser Support
 
